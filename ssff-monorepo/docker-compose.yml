@@ -1,0 +1,18 @@
+services:
+  db:
+    build: 
+      context: ./database
+    container_name: ssff_db
+    environment:
+      POSTGRES_USER: ssff_user
+      POSTGRES_PASSWORD: ssff_password
+      POSTGRES_DB: ssff_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
