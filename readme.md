@@ -58,33 +58,31 @@ We use a "Lakehouse" pattern to separate the fuzzy world of social text from the
 
 ---
 
-## ⚡ Quick Start
-
-1. **Start Database**:
-   ```bash
-   cd ssff-monorepo
-   docker compose up -d
-   ```
-
-2. **Run Pipeline (Mock Data)**:
-   ```bash
-   # Generate data
-   python ssff-monorepo/crawler/crawler.py
-   
-   # Ingest to DB
-   python ssff-monorepo/data-pipeline/ingest.py
-   ```
-
-3. **Start Backend**:
-   ```bash
-   cd ssff-monorepo/backend
-   uvicorn main:app --reload
-   ```
-
 ---
 
-## 🎯 Key Use Cases
+## 🏁 Getting Started
 
-1. **Tet Flower Season**: Predict congestion from Highlands -> Cities.
-2. **Fruit Harvests**: Spot sudden demand spikes in Mekong Delta.
-3. **Border Gates**: Identify "red zones" where trucks are stuck.
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.10+
+- Node.js 18+
+
+### Quick Start (Database)
+The core database (PostGIS + pgvector) is containerized.
+
+```bash
+cd ssff-monorepo
+docker-compose up -d --build
+```
+
+**Credentials** (Default):
+- **Host**: `localhost`
+- **Port**: `5432`
+- **User**: `ssff_user`
+- **Password**: `ssff_password`
+- **Database**: `ssff_db`
+
+### Development
+- **Crawler**: Located in `ssff-monorepo/crawler`.
+- **Backend**: (Coming Soon) FastAPI service.
+- **Frontend**: (Coming Soon) Next.js app.
