@@ -2,3 +2,5 @@ references/
 .DS_Store
 node_modules/
 .env
+.agent/
+.agents/
