@@ -55,11 +55,17 @@ Build the MVP for **SSFF**, a dashboard that visualizes real-time freight demand
     - `GET /api/signals`: Fetch aggregated metrics by time/location.
 - Implement filtering logic (Time range, Location bounds).
 
-### Phase 3: Frontend Visualization
-- Set up Next.js project with Tailwind CSS.
-- Implement Map Component (Mapbox GL JS or Leaflet).
-- Implement Time Sider Component.
-- Connect Map to Mock Data.
+### Phase 3: Frontend Visualization (Current Task)
+- **Setup**: Initialize Next.js (App Router) in `ssff-monorepo/frontend`.
+- **Styling**: Tailwind CSS + `frontend-design` aesthetics (Glassmorphism, dark mode).
+- **Map Tech**: 
+    - **Mapbox GL JS / MapLibre** (Base map).
+    - **Deck.gl** (High-performance flow visualization - `ArcLayer`).
+- **Components**:
+    - `TimeSlider`: Custom month selector (1-12) with animation.
+    - `FlowMap`: Visualizes origin-destination arrows with color heatmaps.
+    - `SidePanel`: Floating glass-panel for insights (Season, Volume).
+- **Data**: Mock data integration for initial build.
 
 ### Phase 4: Integration & Polish
 - Connect Frontend to Backend API.

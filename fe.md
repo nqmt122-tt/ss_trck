@@ -40,35 +40,41 @@ The navigation menu must contain two entries:
 
 ### 4.1 Time Control Component
 
-- A **time slider** allowing users to:
-  - Select a specific time range
-  - Move forward / backward in time
+- A **month-based time slider** allowing users to:
+  - Select a specific month (1-12)
+  - Animate through the year
 - Slider updates visualizations immediately
-- Time granularity configurable (e.g. day / week / month)
+- Time granularity: **Monthly**
 
 ---
 
 ### 4.2 Map Visualization
 
-- Interactive map of Vietnam
+- Interactive flow map (Reference: **flowmap.blue**)
 - Displays:
-  - Nodes (e.g. provinces, hubs, ports)
-  - Edges (freight connections between nodes)
+  - **Flows (Arrows)**: Network direction of trucking demand (from province to province)
+  - **Desperation/Heat**: Color of arrows indicates intensity or desperation level
 
 #### Map Behavior
 - Zoom and pan
-- Hover to view summary data
-- Click to select a node or route
+- Hover to view detailed flow data
+- Click to select a route
 
 #### Visual Encoding
-- Color, thickness, or opacity to represent:
-  - Activity level
-  - Demand intensity
-  - Stress / imbalance (if available)
+- **Arrows**: Direction of flow (Origin -> Destination)
+- **Color Gradient**: Represents "Desperation" or "Heat" level (e.g., Cool -> Hot)
+- **Width/Opacity**: Represents volume or quantity
 
 ---
 
-### 4.3 Data Handling (Frontend)
+### 4.3 Side Panel (Insights)
+
+- Displays contextual information:
+  - Insight about the selected season/month
+  - Aggregated Quantity / Volume
+  - Specific details on selected flows
+
+### 4.4 Data Handling (Frontend)
 
 - Frontend **does not process raw data**
 - Data is retrieved via backend APIs
