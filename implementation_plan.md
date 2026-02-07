@@ -1,84 +1,208 @@
-# Implementation Plan - Draft: Socio-Spatial Freight Forecast (SSFF)
+# Implementation Plan: Socio-Spatial Freight Forecast (SSFF)
 
-**Status**: DRAFT (Pending User Clarification)
-**Date**: 2026-02-05
+**Status**: Active  
+**Date**: 2026-02-06  
+**Version**: 2.0
+
+---
 
 ## Goal Description
-Build the MVP for **SSFF**, a dashboard that visualizes real-time freight demand and urgency ("desperation") in Vietnam based on social media signals. The goal is to provide logistics managers with a "weather map" of trucking demand.
 
-## User Review Required
-> [!IMPORTANT]
-> **Tech Stack Confirmation**: 
-> - **Frontend**: Next.js (React) - robust standard for dashboards.
-> - **Backend**: Python (FastAPI).
-> - **Data Layer**: 
->     - **Processing**: pgvector (PostgreSQL extension) to store/search raw text embeddings.
->     - **Serving**: PostGIS (PostgreSQL extension) for spatial queries.
->     - *Why both?* We need vectors to interpret the "fuzzy" anxiety signals, but rigid SQL for the time-slider/map filtering. They can live in the same Postgres instance.
+Build **SSFF**, a dashboard that visualizes real-time freight demand and urgency ("desperation") in Vietnam based on social media signals. The system uses a **State-Space Model (SSM)** to estimate a latent "Desperation Index" from noisy social observations.
 
-## Proposed Architecture
-- **Frontend**: Single Page Application (Next.js) for map visualization.
-- **Backend API**: Python FastAPI service.
-- **Data Pipeline (One-off Ingestion)**:
-    1. **Raw Text** (Crawled files) -> 
-    2. **Vector Store** (Embeddings) -> 
-    3. **LLM Classifier** (Extract Location/Time/Sentiment) -> 
-    4. **Structured DB** (Signals Table).
-- **Database**: PostgreSQL with `postgis` and `vector` extensions.
+---
 
-## Phased Delivery Plan
+## Project Phases Overview
 
-### Phase 0: Data Acquisition (Crawler)
-- **Status**: Standalone "One-off" Job.
-- **Goal**: Scrape public signals to build the initial dataset.
-- **Tech**: Python scripts (Playwright/Selenium or APIs).
-- **Targets**: Facebook Groups, Zalo, TikTok comments.
-- **Output**: Raw JSON/Text files containing time, source, and text content.
+| Phase | Name | Focus | Deliverable |
+|-------|------|-------|-------------|
+| **1** | Data Collection & Cleaning | Acquire and prepare data | Clean dataset + embeddings |
+| **2** | Analysis & Visualization | Extract signals + build UI | Working dashboard |
+| **3** | SSM Application | Apply Kalman Filter + prediction | Desperation Index engine |
 
-### Phase 1: Foundation & Data Pipeline
-- Initialize Monorepo.
-- Set up PostgreSQL (PostGIS + pgvector).
-- **Ingestion Script**: 
-    - Read Phase 0 output.
-    - Generate Embeddings (OpenAI/SentenceTransformers).
-    - Store in `vectors` table.
-    - Run LLM Extraction:
-        - Extract **Origin** and **Destination** (e.g., "Quảng Trị" -> "Nam Định").
-        - Map **Urgency/Signal** to the **Origin** location (where the truck is needed).
-        - Store route details in `flows` or metadata.
-    - Store in `signals` table.
+---
 
-### Phase 2: Backend API Layer
-- Set up FastAPI project.
-- Implement API Endpoints:
-    - `GET /api/network`: Fetch nodes/edges.
-    - `GET /api/signals`: Fetch aggregated metrics by time/location.
-- Implement filtering logic (Time range, Location bounds).
+## Phase 1: Data Collection & Cleaning
 
-### Phase 3: Frontend Visualization (Current Task)
-- **Setup**: Initialize Next.js (App Router) in `ssff-monorepo/frontend`.
-- **Styling**: Tailwind CSS + `frontend-design` aesthetics (Glassmorphism, dark mode).
-- **Map Tech**: 
-    - **Mapbox GL JS / MapLibre** (Base map).
-    - **Deck.gl** (High-performance flow visualization - `ArcLayer`).
-- **Components**:
-    - `TimeSlider`: Custom month selector (1-12) with animation.
-    - `FlowMap`: Visualizes origin-destination arrows with color heatmaps.
-    - `SidePanel`: Floating glass-panel for insights (Season, Volume).
-- **Data**: Mock data integration for initial build.
+### 1.1 Data Acquisition
 
-### Phase 4: Integration & Polish
-- Connect Frontend to Backend API.
-- Implement "Desperation Index" visualization (Color coding: Green -> Red).
-- Responsive layout adjustments.
-- Basic error handling and loading states.
+#### [MODIFY] [crawler.py](file:///Volumes/Personal/Coding/10/ssff-monorepo/crawler/crawler.py)
+- Implement real crawler logic (Playwright/Selenium)
+- Target sources: Facebook Groups, Zalo, TikTok
+- Output: Raw JSON with `{source, timestamp, content, url}`
+
+#### [NEW] `ssff-monorepo/crawler/sources.json`
+- Configuration file for target URLs and groups
+- Rate limiting and scheduling parameters
+
+### 1.2 Data Cleaning
+
+#### [NEW] `ssff-monorepo/data-pipeline/cleaner.py`
+- Text normalization (Vietnamese diacritics, slang)
+- Deduplication (hash-based)
+- PII removal (phone numbers, names)
+- Spam/ad filtering
+
+### 1.3 Embedding Generation
+
+#### [MODIFY] [ingest.py](file:///Volumes/Personal/Coding/10/ssff-monorepo/data-pipeline/ingest.py)
+- Generate embeddings using OpenAI or SentenceTransformers
+- Store in `vectors` table with metadata
+- Batch processing for efficiency
+
+### 1.4 Database Setup
+
+#### [EXISTING] [02-schema.sql](file:///Volumes/Personal/Coding/10/ssff-monorepo/database/02-schema.sql)
+- PostgreSQL with PostGIS + pgvector
+- Tables: `locations`, `time_buckets`, `signals`, `flows`, `vectors`
+
+**Phase 1 Verification:**
+- [ ] Crawler successfully fetches 100+ posts
+- [ ] Cleaner removes duplicates and PII
+- [ ] Embeddings stored in pgvector (query test)
+
+---
+
+## Phase 2: Analysis & Visualization
+
+### 2.1 Signal Extraction (LLM/NLP)
+
+#### [MODIFY] [ingest.py](file:///Volumes/Personal/Coding/10/ssff-monorepo/data-pipeline/ingest.py)
+- LLM prompt to extract:
+  - **Origin**: Where the truck is needed
+  - **Destination**: Where the truck goes
+  - **Commodity**: e.g., Rice, Dragon Fruit
+  - **Urgency Score**: 0-100 raw score
+
+#### [NEW] `ssff-monorepo/data-pipeline/signal_aggregator.py`
+- Compute observation signals for SSM:
+  - **DPS**: Demand Pressure Score
+  - **SSS**: Supply Scarcity Score
+  - **MS**: Momentum Score (3-day rolling)
+  - **TSS**: Temporal Seasonality Score
+
+### 2.2 Backend API
+
+#### [NEW] `ssff-monorepo/backend/main.py`
+- FastAPI application
+- Endpoints:
+  - `GET /api/signals` - Aggregated signals by time/location
+  - `GET /api/flows` - Origin-destination flow data
+  - `GET /api/locations` - Location reference data
+  - `GET /api/desperation` - DI scores by route
+
+### 2.3 Frontend Dashboard
+
+#### [NEW] `ssff-monorepo/frontend/`
+- **Framework**: Next.js (App Router)
+- **Styling**: Tailwind CSS + Glassmorphism
+- **Map**: Mapbox GL JS + Deck.gl (ArcLayer for flows)
+
+**Components:**
+- `TimeSlider`: Month selector (1-12) with animation
+- `FlowMap`: Origin-destination arrows with color heatmaps
+- `SidePanel`: Floating glass-panel for insights
+- `DesperationGauge`: Visual DI indicator
+
+**Phase 2 Verification:**
+- [ ] API returns valid GeoJSON
+- [ ] Map renders with flow arrows
+- [ ] Time slider updates visualization
+- [ ] Side panel shows drill-down snippets
+
+---
+
+## Phase 3: SSM Application
+
+### 3.1 Kalman Filter Implementation
+
+#### [NEW] `ssff-monorepo/ssm/kalman_filter.py`
+- Implement Linear Gaussian SSM per [SSM Specification](ssm.md)
+- State transition: `x_t = a * x_{t-1} + b * S_t + w_t`
+- Observation model: `y_t = C * x_t + v_t`
+- Prediction and update steps
+
+#### [NEW] `ssff-monorepo/ssm/parameters.py`
+- Parameter configuration:
+  - `a = 0.85` (persistence)
+  - `b = 0.30` (seasonal impact)
+  - `C = [0.40, 0.35, 0.15, 0.10]` (observation weights)
+  - `Q = 0.10`, `R = diag(0.15, 0.20, 0.25, 0.10)`
+
+### 3.2 Desperation Index Engine
+
+#### [NEW] `ssff-monorepo/ssm/desperation_index.py`
+- Map latent state to DI (0-100): `DI = 100 / (1 + exp(-x))`
+- Route-level DI computation
+- Historical DI tracking
+
+### 3.3 Prediction Engine
+
+#### [NEW] `ssff-monorepo/ssm/predictor.py`
+- Forecast DI for next 1-3 days
+- Confidence intervals from covariance
+- Alert threshold detection
+
+### 3.4 API Integration
+
+#### [MODIFY] `ssff-monorepo/backend/main.py`
+- Add endpoints:
+  - `GET /api/desperation/{route_id}` - Current DI
+  - `GET /api/forecast/{route_id}` - Predicted DI
+  - `GET /api/alerts` - Routes exceeding threshold
+
+### 3.5 Frontend Updates
+
+#### [MODIFY] `ssff-monorepo/frontend/`
+- Add DI visualization layer on map
+- Add prediction timeline component
+- Add alert notification system
+
+**Phase 3 Verification:**
+- [ ] Kalman Filter produces valid estimates
+- [ ] DI matches expected interpretation table
+- [ ] Forecast accuracy on historical "Tet Test" data
+- [ ] Alerts trigger correctly for DI > 75
+
+---
 
 ## Verification Plan
+
 ### Automated Tests
-- Backend: Pytest for API endpoints and aggregation logic.
-- Frontend: Jest/React Testing Library for component rendering.
+- **Backend**: Pytest for API endpoints
+- **SSM**: Unit tests for Kalman math correctness
+- **Data Pipeline**: Validation of extractor accuracy
 
 ### Manual Verification
-- **Visual Check**: Verify map updates instantly when slider moves.
-- **Data Accuracy**: Cross-check API responses against database seed data.
-- **Performance**: Ensure map remains responsive with simulated high data volume.
+- **Visual Check**: Map updates smoothly with slider
+- **Tet Test**: Historical replay shows red zones during Tet 2025
+- **Performance**: Map responsive with 1000+ signals
+
+---
+
+## Tech Stack Summary
+
+| Component | Technology |
+|-----------|------------|
+| Crawler | Python + Playwright |
+| Database | PostgreSQL + PostGIS + pgvector |
+| Backend | Python + FastAPI |
+| Frontend | Next.js + Deck.gl + Mapbox |
+| SSM Engine | Python + filterpy/numpy |
+| Infrastructure | Docker Compose |
+
+---
+
+## File Index
+
+| Path | Purpose |
+|------|---------|
+| `ssff-monorepo/crawler/crawler.py` | Data acquisition |
+| `ssff-monorepo/data-pipeline/cleaner.py` | Text cleaning |
+| `ssff-monorepo/data-pipeline/ingest.py` | Embedding + extraction |
+| `ssff-monorepo/data-pipeline/signal_aggregator.py` | Compute SSM inputs |
+| `ssff-monorepo/backend/main.py` | API server |
+| `ssff-monorepo/frontend/` | Dashboard UI |
+| `ssff-monorepo/ssm/kalman_filter.py` | Core SSM engine |
+| `ssff-monorepo/ssm/desperation_index.py` | DI mapping |
+| `ssff-monorepo/ssm/predictor.py` | Forecast engine |

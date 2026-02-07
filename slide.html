@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSFF: Socio-Spatial Freight Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* CSS Variables for Global Theme Management */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-primary: #10b981;
+            --accent-secondary: #06b6d4;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-highlight: #5eead4;
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        /* 1. THE SETUP */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #334155;
+            display: grid;
+            gap: 40px;
+            grid-template-columns: 1fr;
+            margin: 0;
+            padding: 40px 0;
+            place-items: center;
+        }
+
+        .slide-container {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            font-family: var(--font-body);
+            height: 720px;
+            overflow: hidden;
+            padding: 60px;
+            position: relative;
+            width: 1280px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Abstract Background Elements */
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .slide-container::after {
+            content: '';
+            position: absolute;
+            bottom: -5%;
+            left: -5%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .slide-container>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 2. TYPOGRAPHY */
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 72px;
+            margin: 0;
+            color: var(--text-main);
+            line-height: 1.1;
+        }
+
+        .slide-title {
+            font-family: var(--font-heading);
+            font-size: 48px;
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent-primary);
+            padding-left: 24px;
+            color: var(--text-main);
+            width: 100%;
+            text-align: left;
+        }
+
+        h3 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-secondary);
+        }
+
+        p,
+        li {
+            font-size: 20px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        strong {
+            color: var(--text-highlight);
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* 3. LAYOUT COMPONENTS */
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .tiled-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            width: 100%;
+        }
+
+        .tile {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 100%;
+        }
+
+        .tile i {
+            font-size: 40px;
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+        }
+
+        /* Step Indicators */
+        .step-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .step-box {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+            border: 1px solid var(--accent-secondary);
+        }
+
+        .arrow-icon {
+            color: var(--text-muted);
+            font-size: 32px;
+        }
+
+        /* Styled Bullet List */
+        .styled-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .styled-list li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 20px;
+            color: var(--text-muted);
+        }
+
+        .styled-list li::before {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+            font-size: 22px;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent-primary);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SLIDE 1: Title Slide -->
+    <div class="slide-container" id="slide1">
+        <div class="content-area">
+            <div class="text-center">
+                <p class="subtitle">Logistics Intelligence</p>
+                <h1>SSFF: Socio-Spatial<br>Freight Forecast</h1>
+                <p style="font-size: 28px; margin-top: 30px; color: var(--text-highlight);">Turning Social Chatter into
+                    Actionable Supply Chain Data</p>
+                <div style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+                    <p style="color: var(--text-muted); font-family: var(--font-mono);">Presenter: Logistics Strategy
+                        Lead • February 2026</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: The Problem -->
+    <div class="slide-container" id="slide2">
+        <h2 class="slide-title">The Logistics "Blind Spot"</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <h3>Legacy Inefficiency</h3>
+                    <ul class="styled-list">
+                        <li><strong>Lagging Data:</strong> Historical stats are weeks or months old.</li>
+                        <li><strong>Informal Channels:</strong> Real-time demand lives in Facebook Groups, Zalo Chats,
+                            and TikTok.</li>
+                        <li><strong>Market Volatility:</strong> Surge pricing (+30% costs) occurs because signals are
+                            missed.</li>
+                    </ul>
+                    <div class="highlight-box">
+                        <p style="color: var(--text-main); font-weight: 600;">"We are optimizing based on the past,
+                            while the market lives in the present."</p>
+                    </div>
+                </div>
+                <div class="tile" style="background: #1e1b4b; border-color: #4338ca;">
+                    <h3 style="color: #818cf8;"><i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
+                        The Consequence</h3>
+                    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <p style="color: var(--text-main); font-weight: 600;">Shippers</p>
+                            <p>Panic booking and surge pricing premiums.</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-main); font-weight: 600;">Carriers</p>
+                            <p>Inefficient routes and costly empty return legs.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: The Solution -->
+    <div class="slide-container" id="slide3">
+        <h2 class="slide-title">From Noise to Signal</h2>
+        <div class="content-area">
+            <div style="width: 100%;">
+                <div class="step-container">
+                    <div class="step-box" style="border-color: #f87171;">
+                        <i class="fa-solid fa-comments"
+                            style="color: #f87171; font-size: 32px; margin-bottom: 15px;"></i>
+                        <p style="font-weight: bold; color: var(--text-main);">Social Noise</p>
+                        <p style="font-size: 14px;">(Chaos)</p>
+                    </div>
+                    <div class="arrow-icon"><i class="fa-solid fa-chevron-right"></i></div>
+                    <div class="step-box" style="border-color: var(--accent-primary);">
+                        <i class="fa-solid fa-brain"
+                            style="color: var(--accent-primary); font-size: 32px; margin-bottom: 15px;"></i>
+                        <p style="font-weight: bold; color: var(--text-main);">AI Processing</p>
+                        <p style="font-size: 14px;">(The Brain)</p>
+                    </div>
+                    <div class="arrow-icon"><i class="fa-solid fa-chevron-right"></i></div>
+                    <div class="step-box" style="border-color: var(--accent-secondary);">
+                        <i class="fa-solid fa-database"
+                            style="color: var(--accent-secondary); font-size: 32px; margin-bottom: 15px;"></i>
+                        <p style="font-weight: bold; color: var(--text-main);">Structured Signals</p>
+                        <p style="font-size: 14px;">(The Data)</p>
+                    </div>
+                    <div class="arrow-icon"><i class="fa-solid fa-chevron-right"></i></div>
+                    <div class="step-box" style="border-color: #fbbf24;">
+                        <i class="fa-solid fa-map-location-dot"
+                            style="color: #fbbf24; font-size: 32px; margin-bottom: 15px;"></i>
+                        <p style="font-weight: bold; color: var(--text-main);">Intelligence</p>
+                        <p style="font-size: 14px;">(The Map)</p>
+                    </div>
+                </div>
+                <div class="tiled-grid" style="margin-top: 50px;">
+                    <div class="tile">
+                        <h3>1. Listen</h3>
+                        <p>Monitor social channels 24/7 across FB, Zalo, and TikTok.</p>
+                    </div>
+                    <div class="tile">
+                        <h3>2. Understand</h3>
+                        <p>Use LLMs to detect urgency, location, and load types from slang.</p>
+                    </div>
+                    <div class="tile">
+                        <h3>3. Predict</h3>
+                        <p>Forecast demand spikes before they hit mainstream marketplaces.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: Data Pipeline -->
+    <div class="slide-container" id="slide4">
+        <h2 class="slide-title">Phase 1: Acquisition (The Lake)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <h3>Ingestion Strategy</h3>
+                    <p>We crawl where the market talks. Our pipeline handles high-velocity, unstructured text including
+                        local dialects and emoji-heavy sentiment.</p>
+                    <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="tile" style="padding: 15px; text-align: center;">
+                            <i class="fa-brands fa-facebook" style="font-size: 24px;"></i>
+                            <p style="font-size: 16px;">FB Groups</p>
+                        </div>
+                        <div class="tile" style="padding: 15px; text-align: center;">
+                            <i class="fa-solid fa-message" style="font-size: 24px;"></i>
+                            <p style="font-size: 16px;">Zalo Chats</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tile">
+                    <h3>Processing Workflow</h3>
+                    <ul class="styled-list">
+                        <li><strong>Python Crawler:</strong> Scalable cloud-based scrapers.</li>
+                        <li><strong>Data Refinery:</strong> PII removal and de-duplication.</li>
+                        <li><strong>Vector Store:</strong> PostgreSQL + pgvector for semantic search (e.g., matching
+                            "cứu" with "urgency").</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: Signal Extraction -->
+    <div class="slide-container" id="slide5">
+        <h2 class="slide-title">Phase 2: Signal Extraction (The Refinery)</h2>
+        <div class="content-area">
+            <div style="width: 100%;">
+                <div
+                    style="background: var(--bg-secondary); padding: 40px; border-radius: 24px; border: 1px dashed var(--accent-primary);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <div
+                            style="background: #334155; padding: 15px 30px; border-radius: 10px; font-family: var(--font-mono); font-size: 16px; color: var(--accent-secondary);">
+                            "Need 5 trucks HCM -> Hanoi ASAP!"
+                        </div>
+                        <i class="fa-solid fa-arrow-right-long"
+                            style="font-size: 32px; color: var(--accent-primary);"></i>
+                        <div style="text-align: right;">
+                            <span
+                                style="background: var(--accent-primary); color: #000; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 14px;">LLM
+                                ANALYSIS</span>
+                        </div>
+                    </div>
+                    <div class="tiled-grid">
+                        <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
+                            <p style="color: var(--accent-primary); font-weight: 700; font-size: 24px;">ORIGIN/DEST</p>
+                            <p>HCM to Hanoi</p>
+                        </div>
+                        <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
+                            <p style="color: var(--accent-primary); font-weight: 700; font-size: 24px;">COMMODITY</p>
+                            <p>Freight (Trucks)</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="color: #f87171; font-weight: 700; font-size: 24px;">URGENCY</p>
+                            <p>Critical (90/100)</p>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 40px; text-align: center; font-style: italic; color: var(--text-muted);">Every
+                    post is converted into a geospatial data point {Lat, Long, Score}.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: The Innovation -->
+    <div class="slide-container" id="slide6">
+        <h2 class="slide-title">Phase 3: The Desperation Index (SSM)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <h3>Kalman Filtering</h3>
+                    <p>Social data is inherently noisy. We apply <strong>State-Space Models (SSM)</strong> to filter out
+                        the chatter and find the true market state.</p>
+                    <ul class="styled-list" style="margin-top: 25px;">
+                        <li><strong>Noise Cancellation:</strong> One person spamming "URGENT" isn't a crisis. 100 people
+                            is.</li>
+                        <li><strong>Contextual Awareness:</strong> Models include Tet, Harvest, and seasonal baselines.
+                        </li>
+                    </ul>
+                </div>
+                <div class="tile" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <p class="subtitle" style="margin: 0; font-size: 16px;">True Market Demand</p>
+                        <div style="font-size: 80px; font-weight: 800; color: var(--accent-primary);">78.4</div>
+                        <p style="color: var(--text-highlight);">DESPERATION INDEX</p>
+                    </div>
+                    <div style="height: 100px; display: flex; align-items: flex-end; gap: 5px;">
+                        <div style="flex: 1; height: 30%; background: #475569; border-radius: 4px;"></div>
+                        <div style="flex: 1; height: 45%; background: #475569; border-radius: 4px;"></div>
+                        <div style="flex: 1; height: 85%; background: var(--accent-primary); border-radius: 4px;"></div>
+                        <div style="flex: 1; height: 75%; background: var(--accent-secondary); border-radius: 4px;">
+                        </div>
+                        <div style="flex: 1; height: 95%; background: #f87171; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: Conclusion -->
+    <div class="slide-container" id="slide12">
+        <div class="content-area">
+            <div class="text-center">
+                <p class="subtitle">Moving from Reaction to Anticipation</p>
+                <h1 style="font-size: 80px;">SSFF Roadmap</h1>
+                <div class="tiled-grid" style="margin-top: 60px;">
+                    <div class="tile">
+                        <h2 style="color: var(--accent-primary);">01</h2>
+                        <p style="color: var(--text-main); font-weight: 600;">Deploy Crawler</p>
+                        <p style="font-size: 16px;">Active multi-channel ingestion in pilot regions.</p>
+                    </div>
+                    <div class="tile">
+                        <h2 style="color: var(--accent-primary);">02</h2>
+                        <p style="color: var(--text-main); font-weight: 600;">Calibrate SSM</p>
+                        <p style="font-size: 16px;">Refine Desperation Index against historical surge events.</p>
+                    </div>
+                    <div class="tile">
+                        <h2 style="color: var(--accent-primary);">03</h2>
+                        <p style="color: var(--text-main); font-weight: 600;">Pilot Dashboard</p>
+                        <p style="font-size: 16px;">Live visualization for dispatch and procurement teams.</p>
+                    </div>
+                </div>
+                <p style="margin-top: 60px; font-size: 24px; color: var(--text-main);">Thank You.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
